@@ -115,13 +115,73 @@ def get_covariance(mol1, mol2, max_sizes, kernel , sigma=None):
     return K_covar
 
 
+#def get_global_K(X, Y, sigma, local_kernel, global_kernel, options):
+#    n_x = len(X)
+#    n_y = len(Y)
+#    species = sorted(list(set([s[0] for m in numpy.concatenate((X, Y), axis=0) for s in m])))
+#
+#    mol_counts = []
+#    for m in numpy.concatenate((X, Y), axis=0):
+#        count_species = {s:0 for s in species}
+#        for a in m:
+#            count_species[a[0]] += 1
+#        mol_counts.append(count_species)
+#
+#    max_atoms = {s:0 for s in species}
+#    for m in mol_counts:
+#        for k, v in m.items():
+#            max_atoms[k] = max([v, max_atoms[k]])
+#    max_size = sum(max_atoms.values())
+#    print(max_atoms, max_size, flush=True)
+#    K_global = numpy.zeros((n_x, n_y))
+#    print("Computing global kernel elements:\n[", sep='', end='', flush=True)
+#    if X[0] == Y[0]:
+#        self = True
+#    else:
+#        self = False
+#        self_X = []
+#        self_Y = []
+#    for m in range(0, n_x):
+#        if not self:
+#            K_self = get_covariance(X[m], X[m], max_atoms, local_kernel, sigma=sigma)
+#            self_X.append(global_kernel(K_self, options))
+#        for n in range(0, n_y):
+#            if not self:
+#                K_self = get_covariance(Y[m], Y[m], max_atoms, local_kernel, sigma=sigma)
+#                self_Y.append(global_kernel(K_self, options))
+#            K_pair = get_covariance(X[m], Y[n], max_atoms, local_kernel, sigma=sigma)
+#            K_global[m][n] = global_kernel(K_pair, options)
+#        if ((m+1) / len(X) * 100)%10 == 0:
+#            print(f"##### {(m+1) / len(X) * 100}% #####", sep='', end='', flush=True)
+#    print("]", flush=True)
+#    if options['normalize'] == True:
+#        if self :
+#            K_global = normalize_kernel(K_global, self_x=None, self_y=None)
+#        else:
+#            K_global = normalize_kernel(K_global, self_x=self_X, self_y=self_Y)
+#    print(f"Final global kernel has size : {K_global.shape}", flush=True)
+#    return K_global
+
+
+
+
+
+
+
+############################################
+
 def get_global_K(X, Y, sigma, local_kernel, global_kernel, options):
     n_x = len(X)
     n_y = len(Y)
-    species = sorted(list(set([s[0] for m in numpy.concatenate((X, Y), axis=0) for s in m])))
+
+    X_R = [x[0] for x in X]
+    X_P = [x[1] for x in X]
+    Y_R = [y[0] for y in Y]
+    Y_P = [y[1] for y in Y]
+    species = sorted(list(set([s[0] for m in numpy.concatenate((X_R, Y_R, X_P, Y_P), axis=0) for s in m])))
 
     mol_counts = []
-    for m in numpy.concatenate((X, Y), axis=0):
+    for m in numpy.concatenate((X_R, Y_R, X_P, Y_P), axis=0):
         count_species = {s:0 for s in species}
         for a in m:
             count_species[a[0]] += 1
@@ -131,9 +191,12 @@ def get_global_K(X, Y, sigma, local_kernel, global_kernel, options):
     for m in mol_counts:
         for k, v in m.items():
             max_atoms[k] = max([v, max_atoms[k]])
+    print(max_atoms)
     max_size = sum(max_atoms.values())
     print(max_atoms, max_size, flush=True)
     K_global = numpy.zeros((n_x, n_y))
+    print(f"Final global kernel has size : {K_global.shape}", flush=True)
+    exit()
     print("Computing global kernel elements:\n[", sep='', end='', flush=True)
     if X[0] == Y[0]:
         self = True
@@ -159,8 +222,12 @@ def get_global_K(X, Y, sigma, local_kernel, global_kernel, options):
             K_global = normalize_kernel(K_global, self_x=None, self_y=None)
         else:
             K_global = normalize_kernel(K_global, self_x=self_X, self_y=self_Y)
-    print(f"Final global kernel has size : {K_global.shape}", flush=True)
     return K_global
+
+
+
+##############################################
+
 
 def my_laplacian_kernel(X, Y, gamma):
   """ Compute Laplacian kernel between X and Y """
