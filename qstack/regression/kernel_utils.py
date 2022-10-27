@@ -191,12 +191,10 @@ def get_global_K(X, Y, sigma, local_kernel, global_kernel, options):
     for m in mol_counts:
         for k, v in m.items():
             max_atoms[k] = max([v, max_atoms[k]])
-    print(max_atoms)
     max_size = sum(max_atoms.values())
-    print(max_atoms, max_size, flush=True)
+    print('Max Atoms per Specie:', max_atoms, 'Max Atoms:', max_size, flush=True)
     K_global = numpy.zeros((n_x, n_y))
     print(f"Final global kernel has size : {K_global.shape}", flush=True)
-    exit()
     print("Computing global kernel elements:\n[", sep='', end='', flush=True)
     if X[0] == Y[0]:
         self = True
@@ -204,24 +202,33 @@ def get_global_K(X, Y, sigma, local_kernel, global_kernel, options):
         self = False
         self_X = []
         self_Y = []
+    XK_rxn = []
+    if not self:
+        YK_rxn = []
     for m in range(0, n_x):
-        if not self:
-            K_self = get_covariance(X[m], X[m], max_atoms, local_kernel, sigma=sigma)
-            self_X.append(global_kernel(K_self, options))
-        for n in range(0, n_y):
-            if not self:
-                K_self = get_covariance(Y[m], Y[m], max_atoms, local_kernel, sigma=sigma)
-                self_Y.append(global_kernel(K_self, options))
-            K_pair = get_covariance(X[m], Y[n], max_atoms, local_kernel, sigma=sigma)
-            K_global[m][n] = global_kernel(K_pair, options)
-        if ((m+1) / len(X) * 100)%10 == 0:
-            print(f"##### {(m+1) / len(X) * 100}% #####", sep='', end='', flush=True)
+        K_rxn = get_covariance(X_R[m], X_P[m], max_atoms, local_kernel, sigma=sigma)
+        XK_rxn.append(K_rxn)
+    if self:
+        YK_rxn = XK_rxn
+    else:
+        for m in range(0, n_y):
+            K_rxn = get_covariance(Y_R[m], Y_P[m], max_atoms, local_kernel, sigma=sigma)
+            YK_rxn.append(K_rxn)
+    for m in range(n_x):
+        for n in range(n_y):
+            res = numpy.abs(XK_rxn[m] - YK_rxn[n])
+            K_global[m][n] = (-1 * global_kernel(res, options))
+            if (((m * n_y) + n + 1)/(n_x * n_y) * 100)%10 == 0:
+                print(f"##### {(((m * n_y) + n + 1)/(n_x * n_y) * 100)}% #####", sep='', end='', flush=True)
     print("]", flush=True)
-    if options['normalize'] == True:
-        if self :
-            K_global = normalize_kernel(K_global, self_x=None, self_y=None)
-        else:
-            K_global = normalize_kernel(K_global, self_x=self_X, self_y=self_Y)
+    numpy.exp(K_global, out=K_global)
+    print("global kernel computed")
+## EXP OF THE COVARIANCE IS NORMALIZED BY DEFAULT ###    
+#    if options['normalize'] == True:
+#        if self :
+#            K_global = normalize_kernel(K_global, self_x=None, self_y=None)
+#        else:
+#            K_global = normalize_kernel(K_global, self_x=self_X, self_y=self_Y)
     return K_global
 
 
