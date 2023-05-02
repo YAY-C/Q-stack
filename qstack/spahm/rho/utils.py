@@ -20,13 +20,13 @@ defaults = SimpleNamespace(
 
 
 def get_chsp(f, n):
-    if f:
+    if os.path.isfile(f):
       chsp = np.loadtxt(f, dtype=int).reshape(-1)
       if(len(chsp)!=n):
           print('Wrong lengh of the file', f, file=sys.stderr);
           exit(1)
     else:
-        chsp = np.zeros(n, dtype=int)
+        chsp = np.ones(n, dtype=int) * int(f)
     return chsp
 
 def load_mols(xyzlist, charge, spin, basis, printlevel=0, units='ANG'):
@@ -44,7 +44,7 @@ def mols_guess(mols, xyzlist, guess, xc=defaults.xc, spin=None, readdm=False, pr
         if printlevel>0: print(xyzfile, flush=True)
         if not readdm:
             e, v = spahm.get_guess_orbitals(mol, guess, xc=xc)
-            dm   = guesses.get_dm(v, mol.nelec, mol.spin if spin else None)
+            dm   = guesses.get_dm(v, mol.nelec, mol.spin if spin != None else None)
         else:
             dm = np.load(readdm+'/'+os.path.basename(xyzfile)+'.npy')
             if spin and dm.ndim==2:
@@ -65,7 +65,7 @@ def dm_open_mod(dm, omod):
 def get_xyzlist(xyzlistfile):
   return np.loadtxt(xyzlistfile, dtype=str, ndmin=1)
 
-def load_reps(f_in, from_list=True, single=True, with_labels=False, local=True, reaction=False):
+def load_reps(f_in, from_list=True, with_labels=False, local=True, summ=False):
     if from_list:
         X_list = get_xyzlist(f_in)
         Xs = [np.load(f_X, allow_pickle=True) for f_X in X_list]
@@ -76,13 +76,16 @@ def load_reps(f_in, from_list=True, single=True, with_labels=False, local=True, 
         labels = []
         if local == True:
             if  type(x[0,0]) == str:
-                reps.append(x[:,1])
-                labels.append(x[:,0])
+                if summ:
+                    reps.append(x[:,1].sum(axis=0))
+                else:
+                    reps.extend(x[:,1])
+                    labels.extend(x[:,0])
             else:
                 reps.extend(x)
         else:
            if type(x[0]) == str:
-                reps.extend(x[1])
+                reps.append(x[1])
                 labels.extend(x[0])
            else:
                 reps.extend(x) 
@@ -93,8 +96,61 @@ def load_reps(f_in, from_list=True, single=True, with_labels=False, local=True, 
         reps = np.array(reps, dtype=float)
         print("Error while loading representations, verify you parameters !")
         exit()
-    reps = np.array(reps, ndmin=1)
     if with_labels:
         return reps, labels
     else:
         return reps
+def add_progressbar(legend='', max_value=100):
+    import progressbar
+    import time
+    widgets=[\
+    ' [', progressbar.Timer(), '] ',\
+    progressbar.Bar(),\
+    ' (', progressbar.ETA(), ') ',]
+    bar = progressbar.ProgressBar(widgets=widgets, max_value=max_value).start()
+    return bar
+
+def build_reaction(reacts_file, prods_file, local=False, print_level=0):
+    reacts = []
+    with open(reacts_file, 'r') as r_in:
+        lines = r_in.readlines()
+        for line in lines:
+            line = line.rstrip('\n')
+            structs = line.split(' ')
+            reacts.append(structs)
+    prods = []
+    with open(prods_file, 'r') as p_in:
+        lines = p_in.readlines()
+        for line in lines:
+            line = line.rstrip('\n')
+            structs = line.split(' ')
+            prods.append(structs)
+    tot = len(reacts)+len(prods)
+    if print_level > 0 : progress = add_progressbar(max_value=tot)
+    i = 0
+    XR = []
+    for rxn in reacts:
+        xr = []
+        for r in rxn:
+            xr.append(load_reps(r, from_list=False, with_labels=False, local=local, summ=True))
+        xr = np.array(xr)
+        if xr.ndim > 1:
+            xr = xr.sum(axis=0)
+        XR.append(xr)
+        i+=1
+        if print_level > 0 : progress.update(i)
+    XP = []
+    for rxn in prods:
+        xp=[]
+        for p in rxn:
+            xp.append(load_reps(p, from_list=False, with_labels=False, local=local, summ=True))
+        xp = np.array(xp)
+        if xp.ndim > 1:
+            xp = xp.sum(axis=0)
+        XP.append(xp)
+        i+=1
+        if print_level > 0 : progress.update(i)
+    XR = np.array(XR)
+    XP = np.array(XP)
+    rxn = XP - XR
+    return rxn
