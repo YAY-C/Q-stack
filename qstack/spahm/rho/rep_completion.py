@@ -72,7 +72,7 @@ def get_vpattern(atom_set, aux_basis_set):
         v_feat[k] = [start, total]
     return v_feat
 
-def get_vpattern_bond(bonds_dict, bpath):
+def get_vpattern_bond(bonds_dict, bpath, omod=False):
     bond_pairs = []
     for q, qq in bonds_dict.items():
         bond_pairs.extend(qq)
@@ -83,6 +83,7 @@ def get_vpattern_bond(bonds_dict, bpath):
     max_bonds = max([len(val) for val in bonds_dict.values()])
     max_length = max(qq_sizes.values()) * max_bonds
     v_atoms = {}
+    v_beta = {}
     for q, qq in bonds_dict.items():
         v_feat = {}
         start = 0
@@ -91,7 +92,12 @@ def get_vpattern_bond(bonds_dict, bpath):
             v_feat[iqq] =  [start, end]
             start = end
         v_atoms[q] = v_feat
-    return v_atoms, max_length
+        if omod:
+            v_beta[q] = {k:[val[0]+end, val[1]+end] for k, val in v_atoms[q].items()}
+    if omod:
+        return v_atoms, v_beta, max_length*2
+    else:
+        return v_atoms, max_length
 
 def test_equivalence(old_vectors, new_vectors):
     correspondances = []
