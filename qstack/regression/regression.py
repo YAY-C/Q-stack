@@ -6,14 +6,14 @@ from sklearn.model_selection import train_test_split
 from qstack.regression.kernel_utils import get_kernel, defaults, ParseKwargs
 from qstack.tools import correct_num_threads
 
-def regression(X, y, read_kernel=False, sigma=defaults.sigma, eta=defaults.eta, akernel=defaults.kernel, gkernel=defaults.gkernel, gdict=defaults.gdict, test_size=defaults.test_size, train_size=defaults.train_size, n_rep=defaults.n_rep, debug=False):
+def regression(X, y, read_kernel=False, sigma=defaults.sigma, eta=defaults.eta, akernel=defaults.kernel, gkernel=defaults.gkernel, gdict=defaults.gdict, test_size=defaults.test_size, train_size=defaults.train_size, n_rep=defaults.n_rep, debug=0):
     if read_kernel is False:
         kernel = get_kernel(akernel, [gkernel, gdict])
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=0)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=debug)
         K_all  = kernel(X_train, X_train, 1.0/sigma)
         Ks_all = kernel(X_test,  X_train, 1.0/sigma)
     else:
-        idx_train, idx_test, y_train, y_test = train_test_split(np.arange(len(y)), y, test_size=test_size, random_state=0)
+        idx_train, idx_test, y_train, y_test = train_test_split(np.arange(len(y)), y, test_size=test_size, random_state=debug)
         K_all  = X[np.ix_(idx_train,idx_train)]
         Ks_all = X[np.ix_(idx_test, idx_train)]
 
@@ -51,18 +51,26 @@ def main():
     parser.add_argument('--gdict',     nargs='*',   action=ParseKwargs, dest='gdict',     default=defaults.gdict,    help='dictionary like input string to initialize global kernel parameters')
     parser.add_argument('--splits',     type=int,   dest='splits',     default=defaults.n_rep,     help='number of splits (default='+str(defaults.n_rep)+')')
     parser.add_argument('--train',      type=float, dest='train_size', default=defaults.train_size, nargs='+', help='training set fractions')
-    parser.add_argument('--debug',      action='store_true', dest='debug', default=False,  help='enable debug')
+    parser.add_argument('--debug',      type=int, dest='debug', default=0,  help='enable debug')
+    parser.add_argument('--select',      type=str,   dest='f_select',       required=False, help='a txt file containing the indices of the selected representations')
     parser.add_argument('--ll',         action='store_true', dest='ll',    default=False,  help='if correct for the numper of threads')
     parser.add_argument('--readkernel', action='store_true', dest='readk', default=False,  help='if X is kernel')
+    parser.add_argument('--name',     type=str,   dest='nameout',     required=True,    help='the name of the output file containting the LC data (.txt).')
     args = parser.parse_args()
     print(vars(args))
     if(args.ll): correct_num_threads()
     X = np.load(args.repr)
     y = np.loadtxt(args.prop)
+    if args.f_select != None:
+        selected = np.loadtxt(args.f_select, dtype=int)
+        X = X[selected]
+        y = y[selected]
     maes_all = regression(X, y, read_kernel=args.readk, sigma=args.sigma, eta=args.eta, akernel=args.akernel,
                           test_size=args.test_size, train_size=args.train_size, n_rep=args.splits, debug=args.debug)
     for size_train, meanerr, stderr in maes_all:
         print("%d\t%e\t%e" % (size_train, meanerr, stderr))
+    maes_all = np.array(maes_all)
+    np.savetxt(args.nameout, maes_all, header="size_train, meanerr, stderr")
 
 if __name__ == "__main__":
     main()
