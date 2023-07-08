@@ -55,6 +55,7 @@ def main():
     parser.add_argument('--merge',    action='store_true', dest='merge',     default=True,                     help='if merge different omods')
     parser.add_argument('--onlym0',   action='store_true', dest='only_m0',   default=False,                    help='if use only fns with m=0')
     parser.add_argument('--savedm',   action='store_true', dest='savedm',    default=False,                    help='if save dms')
+    parser.add_argument('--symbols',  action='store_true', dest='with_symbols',    default=False,             help='if save tuples with (symbol, vec) for all atoms')
     parser.add_argument('--readdm',   type=str,            dest='readdm',    default=None,                     help='dir to read dms from')
     parser.add_argument('--elements', type=str,            dest='elements',  default=None,  nargs='+',         help="the elements contained in the database")
     parser.add_argument('--name',       dest='name_out',   required=True,                         type=str, help='name of the output file.')
@@ -68,10 +69,16 @@ def main():
         args.name_out = os.path.splitext(args.filename)[0]
 
     xyzlistfile = [args.filename] if args.filename.split('.')[-1] == 'xyz' else args.filename
-    xyzlist = utils.get_xyzlist(xyzlistfile)
-    charge  = utils.get_chsp(args.charge, len(xyzlist))
-    spin    = utils.get_chsp(args.spin,   len(xyzlist))
+    if type(xyzlistfile) == list:
+        xyzlist = xyzlistfile
+        charge  = utils.get_chsp(args.charge, len(xyzlist))
+        spin    = utils.get_chsp(args.spin,   len(xyzlist))
+    else:
+        xyzlist = np.loadtxt(xyzlistfile, dtype=str, usecols=0)
+        charge = np.loadtxt(args.filename, usecols=1, dtype=int)
+        spin = np.loadtxt(args.filename, usecols=2, dtype=int)
     mols    = utils.load_mols(xyzlist, charge, spin, args.basis, args.print, units=args.units)
+    if args.with_symbols: all_atoms   = np.array([mol.elements for mol in mols]).flatten()
     dms     = utils.mols_guess(mols, xyzlist, args.guess,
                                xc=defaults.xc, spin=args.spin, readdm=args.readdm, printlevel=args.print)
     allvec  = bond(mols, dms, args.bpath, args.cutoff, args.omod,
@@ -88,7 +95,10 @@ def main():
             for omod, vec in zip(args.omod, allvec):
                 np.save(args.name_out+'_'+omod, vec)
         else:
-            np.save(args.name_out+'_'+'_'.join(args.omod), np.hstack(allvec))
+            allvec = np.hstack(allvec)
+            if args.with_symbols: allvec = np.array([(v, z) for v,z in zip(allvec, all_atoms)], dtype=object)
+            np.save(args.name_out+'_'+'_'.join(args.omod), allvec)
+    if args.with_symbols: allvec = np.array([(z, v) for v,z in zip(allvec, all_atoms)], dtype=object)
     else:
         np.save(args.name_out, allvec)
 
