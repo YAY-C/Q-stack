@@ -65,17 +65,29 @@ def dm_open_mod(dm, omod):
 def get_xyzlist(xyzlistfile):
   return np.loadtxt(xyzlistfile, dtype=str, ndmin=1)
 
-def load_reps(f_in, from_list=True, with_labels=False, local=True, summ=False):
+def load_reps(f_in, from_list=True, with_labels=False, local=True, summ=False, printlevel=0):
     if from_list:
         X_list = get_xyzlist(f_in)
-        Xs = [np.load(f_X, allow_pickle=True) for f_X in X_list]
+        if printlevel > 0:
+            progress = add_progressbar(max_value=len(X_list)*2)
+        i=0
+        Xs = []
+        for f_X in X_list:
+            Xs.append(np.load(f_X, allow_pickle=True))
+            if printlevel > 0:
+                progress.update(i)
+                i+=1
     else:
-        Xs = [np.load(f_in, allow_pickle=True)]
+        Xs = np.load(f_in, allow_pickle=True)
+        if printlevel > 0:
+            progress = add_progressbar(max_value=len(Xs))
+        i=0
     reps = []
+    labels = []
     for x in Xs:
-        labels = []
+        print(x.shape)
         if local == True:
-            if  type(x[0,0]) == str:
+            if type(x[0][0]) == str or type(x[0][0]) == np.str_:
                 if summ:
                     reps.append(x[:,1].sum(axis=0))
                 else:
@@ -84,15 +96,18 @@ def load_reps(f_in, from_list=True, with_labels=False, local=True, summ=False):
             else:
                 reps.extend(x)
         else:
-           if type(x[0]) == str:
+           if type(x[0]) == str or type(x[0]) == np.str_:
                 reps.append(x[1])
                 labels.extend(x[0])
            else:
-                reps.extend(x) 
+                reps.append(x) 
+        if printlevel > 0:
+            progress.update(i)
+            i+=1
     try:
         reps = np.array(reps, dtype=float)
     except:
-        print(reps[0])
+        print(len(reps), [r.shape for r in reps], sep='\n')
         reps = np.array(reps, dtype=float)
         print("Error while loading representations, verify you parameters !")
         exit()
@@ -154,3 +169,14 @@ def build_reaction(reacts_file, prods_file, local=False, print_level=0):
     XP = np.array(XP)
     rxn = XP - XR
     return rxn
+
+def regroup_symbols(file_list, print_level=0):
+    reps, atoms = load_reps(file_list, from_list=True, with_labels=True, local=True, printlevel=print_level)
+    if print_level > 0: print(f"Extracting {len(atoms)} atoms from {file_list}:")
+    atoms_set = {e:[] for e in set(atoms)}
+    for e, v in zip(atoms, reps):
+        atoms_set[e].append(v)
+    if print_level > 0: print([(k, len(v)) for k, v in atoms_set.items()])
+    return atoms_set
+
+
