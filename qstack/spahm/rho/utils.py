@@ -20,13 +20,13 @@ defaults = SimpleNamespace(
 
 
 def get_chsp(f, n):
-    if os.path.isfile(f):
+    if os.path.isfile(str(f)):
       chsp = np.loadtxt(f, dtype=int).reshape(-1)
       if(len(chsp)!=n):
           print('Wrong lengh of the file', f, file=sys.stderr);
           exit(1)
     else:
-        chsp = np.ones(n, dtype=int) * int(f)
+        chsp = np.ones(n, dtype=int) * int(f) if f != None else np.array(n*[f]) 
     return chsp
 
 def load_mols(xyzlist, charge, spin, basis, printlevel=0, units='ANG'):
