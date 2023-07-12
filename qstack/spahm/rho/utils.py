@@ -144,7 +144,7 @@ def build_reaction(reacts_file, prods_file, local=False, print_level=0):
     for rxn in reacts:
         xr = []
         for r in rxn:
-            xr.append(load_reps(r, from_list=False, with_labels=False, local=local, summ=True))
+            xr.append(load_reps(r, from_list=False, with_labels=False, local=local, summ=True, single=True))
         xr = np.array(xr)
         if xr.ndim > 1:
             xr = xr.sum(axis=0)
@@ -155,7 +155,7 @@ def build_reaction(reacts_file, prods_file, local=False, print_level=0):
     for rxn in prods:
         xp=[]
         for p in rxn:
-            xp.append(load_reps(p, from_list=False, with_labels=False, local=local, summ=True))
+            xp.append(load_reps(p, from_list=False, with_labels=False, local=local, summ=True, single=True))
         xp = np.array(xp)
         if xp.ndim > 1:
             xp = xp.sum(axis=0)
@@ -165,7 +165,7 @@ def build_reaction(reacts_file, prods_file, local=False, print_level=0):
     XR = np.array(XR)
     XP = np.array(XP)
     rxn = XP - XR
-    return rxn
+    return np.squeeze(rxn)
 
 def regroup_symbols(file_list, print_level=0):
     reps, atoms = load_reps(file_list, from_list=True, with_labels=True, local=True, printlevel=print_level)
