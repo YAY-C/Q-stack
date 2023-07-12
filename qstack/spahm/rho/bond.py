@@ -86,8 +86,6 @@ def main():
                    spin=args.spin, elements=args.elements,
                    only_m0=args.only_m0, zeros=args.zeros, split=args.split, printlevel=args.print,
                    pairfile=args.pairfile, dump_and_exit=args.dump_and_exit, no_oriented=args.single)
-    if len(allvec) == 1:
-        allvec = allvec[0]
 
     if args.print>1: print(allvec.shape)
 
@@ -99,6 +97,16 @@ def main():
             allvec = np.hstack(allvec)
             if args.with_symbols: allvec = np.array([(z, v) for v,z in zip(allvec, all_atoms)], dtype=object)
             np.save(args.name_out+'_'+'_'.join(args.omod), allvec)
+    if args.single :
+        import sys
+        sys.path.insert(0, "/home/calvino/yannick/SPAHM-RHO/rxn/")
+        from bond_bagging import bagged_atomic_bonds
+        bagged = [bagged_atomic_bonds(allvec[i], xyzlist[i], args.pairfile, bpath=args.bpath, omod=args.omod) for i in range(len(allvec))]
+        allvec = bagged
+
+    if len(allvec) == 1:
+        allvec = allvec[0]
+    if args.print >0 : print(f"Shape of the saved array : {allvec.shape}.")
     if args.with_symbols:
         allvec = np.array([(z, v) for v,z in zip(allvec, all_atoms)], dtype=object)
         np.save(args.name_out, allvec)
