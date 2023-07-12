@@ -133,13 +133,13 @@ def vec_from_cs(z, cs, lmax, idx):
     return v
 
 
-def repr_for_bond(i0, i1, L, mybasis, idx, q, r, cutoff):
+def repr_for_bond(i0, i1, L, mybasis, idx, q, r, cutoff, no_lowdin=False):
     q0, q1 = q[i0], q[i1]
     r0, r1 = r[i0], r[i1]
     z = r1-r0
     if np.linalg.norm(z) > cutoff:
         return None, None
-    dm1   = L.get_bond(i0, i1)
+    dm1   = L.get_bond(i0, i1, no_lowdin=no_lowdin)
     bname = make_bname(q0, q1)
     cs    = fit_dm(dm1, L.mol, mybasis[bname], r0, r1)
     lmax  = max([c[0] for c in cs])
@@ -148,7 +148,7 @@ def repr_for_bond(i0, i1, L, mybasis, idx, q, r, cutoff):
     return [v0, v1], bname
 
 
-def repr_for_mol(mol, dm, qqs, M, mybasis, idx, maxlen, cutoff, single=False):
+def repr_for_mol(mol, dm, qqs, M, mybasis, idx, maxlen, cutoff, single=False, no_lowdin=False):
 
     L = lowdin.Lowdin_split(mol, dm)
     if single:
@@ -160,7 +160,7 @@ def repr_for_mol(mol, dm, qqs, M, mybasis, idx, maxlen, cutoff, single=False):
 
     for i0 in range(mol.natm):
         for i1 in range(i0):
-            v, bname = repr_for_bond(i0, i1, L, mybasis, idx, q, r, cutoff)
+            v, bname = repr_for_bond(i0, i1, L, mybasis, idx, q, r, cutoff, no_lowdin=no_lowdin)
             if v is None:
                 continue
             mybonds[i0][0][bname] += v[0]
