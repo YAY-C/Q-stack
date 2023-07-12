@@ -99,6 +99,7 @@ def main():
             allvec = np.hstack(allvec)
             if args.with_symbols: allvec = np.array([(v, z) for v,z in zip(allvec, all_atoms)], dtype=object)
             np.save(args.name_out+'_'+'_'.join(args.omod), allvec)
+#TODO    if args.single_sym :
     if args.with_symbols: allvec = np.array([(z, v) for v,z in zip(allvec, all_atoms)], dtype=object)
     else:
         np.save(args.name_out, allvec)

@@ -152,7 +152,7 @@ def repr_for_mol(mol, dm, qqs, M, mybasis, idx, maxlen, cutoff, single=False):
 
     L = lowdin.Lowdin_split(mol, dm)
     if single:
-        print("Entering sinigle-mode")
+        print("Entering global (single z-symmetric).")
     q = [mol.atom_symbol(i) for i in range(mol.natm)]
     r = mol.atom_coords(unit='ANG')
 
