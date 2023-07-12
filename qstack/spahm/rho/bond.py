@@ -10,7 +10,7 @@ from .utils import defaults
 def bond(mols, dms,
          bpath=defaults.bpath, cutoff=defaults.cutoff, omods=defaults.omod,
          spin=None, elements=None, only_m0=False, zeros=False, split=False, printlevel=0,
-         pairfile=None, dump_and_exit=False):
+         pairfile=None, dump_and_exit=False, no_oriented=False):
 
     elements, mybasis, qqs0, qqs4q, idx, M = dmbb.read_basis_wrapper(mols, bpath, only_m0, printlevel,
                                                                      elements=elements, cutoff=cutoff,
@@ -26,7 +26,7 @@ def bond(mols, dms,
         if printlevel>0: print('mol', imol, flush=True)
         for iomod, omod in enumerate(omods):
             DM  = utils.dm_open_mod(dm, omod) if spin else dm
-            vec = dmbb.repr_for_mol(mol, DM, qqs, M, mybasis, idx, maxlen, cutoff)
+            vec = dmbb.repr_for_mol(mol, DM, qqs, M, mybasis, idx, maxlen, cutoff, single=no_oriented)
             allvec[iomod,imol,:len(vec)] = vec
 
     if split is False:
@@ -54,6 +54,7 @@ def main():
     parser.add_argument('--split',    action='store_true', dest='split',     default=False,                    help='if split into molecules')
     parser.add_argument('--merge',    action='store_true', dest='merge',     default=True,                     help='if merge different omods')
     parser.add_argument('--onlym0',   action='store_true', dest='only_m0',   default=False,                    help='if use only fns with m=0')
+    parser.add_argument('--single',   action='store_true', dest='single',   default=False,                    help='for generating non-oriented representations')
     parser.add_argument('--savedm',   action='store_true', dest='savedm',    default=False,                    help='if save dms')
     parser.add_argument('--symbols',  action='store_true', dest='with_symbols',    default=False,             help='if save tuples with (symbol, vec) for all atoms')
     parser.add_argument('--readdm',   type=str,            dest='readdm',    default=None,                     help='dir to read dms from')
@@ -84,7 +85,7 @@ def main():
     allvec  = bond(mols, dms, args.bpath, args.cutoff, args.omod,
                    spin=args.spin, elements=args.elements,
                    only_m0=args.only_m0, zeros=args.zeros, split=args.split, printlevel=args.print,
-                   pairfile=args.pairfile, dump_and_exit=args.dump_and_exit)
+                   pairfile=args.pairfile, dump_and_exit=args.dump_and_exiti, no_oriented=args.single)
     if len(allvec) == 1:
         allvec = allvec[0]
 

@@ -148,9 +148,11 @@ def repr_for_bond(i0, i1, L, mybasis, idx, q, r, cutoff):
     return [v0, v1], bname
 
 
-def repr_for_mol(mol, dm, qqs, M, mybasis, idx, maxlen, cutoff):
+def repr_for_mol(mol, dm, qqs, M, mybasis, idx, maxlen, cutoff, single=False):
 
     L = lowdin.Lowdin_split(mol, dm)
+    if single:
+        print("Entering sinigle-mode")
     q = [mol.atom_symbol(i) for i in range(mol.natm)]
     r = mol.atom_coords(unit='ANG')
 
@@ -162,7 +164,10 @@ def repr_for_mol(mol, dm, qqs, M, mybasis, idx, maxlen, cutoff):
             if v is None:
                 continue
             mybonds[i0][0][bname] += v[0]
-            mybonds[i1][0][bname] += v[1]
+            if not single:
+                mybonds[i1][0][bname] += v[1]  
+            else:
+                mybonds[i1][0][bname] += v[0]
 
     vec = [None]*mol.natm
     for i0 in range(mol.natm):
