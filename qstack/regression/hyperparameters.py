@@ -10,7 +10,7 @@ from qstack.tools import correct_num_threads
 def hyperparameters(X, y,
            sigma=defaults.sigmaarr, eta=defaults.etaarr, gkernel=defaults.gkernel, gdict=defaults.gdict,
            akernel=defaults.kernel, test_size=defaults.test_size, splits=defaults.splits,
-           printlevel=0, adaptive=False, read_kernel=False):
+           printlevel=0, adaptive=False, read_kernel=False, ipywidget=None):
 
     def k_fold_opt(K_all):
         kfold = KFold(n_splits=splits, shuffle=False)
@@ -45,6 +45,7 @@ def hyperparameters(X, y,
                     sys.stderr.flush()
                     print(s, e, mean, std, flush=True)
                 errors.append((mean, std, e, s))
+                if ipywidget != None : ipywidget.value +=1
         return errors
     if gkernel == None:
         gwrap = None
