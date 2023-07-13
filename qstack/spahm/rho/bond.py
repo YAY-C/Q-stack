@@ -86,7 +86,7 @@ def main():
     allvec  = bond(mols, dms, args.bpath, args.cutoff, args.omod,
                    spin=args.spin, elements=args.elements,
                    only_m0=args.only_m0, zeros=args.zeros, split=args.split, printlevel=args.print,
-                   pairfile=args.pairfile, dump_and_exit=args.dump_and_exit, no_oriented=args.single)
+                   pairfile=args.pairfile, dump_and_exit=args.dump_and_exit, no_oriented=args.single, no_lowdin=args.no_lowdin)
 
     if args.print>1: print(allvec.shape)
 
