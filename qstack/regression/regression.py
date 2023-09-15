@@ -3,6 +3,7 @@
 import numpy as np
 import scipy
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score
 from qstack.regression.kernel_utils import get_kernel, defaults, ParseKwargs
 from qstack.tools import correct_num_threads
 
@@ -28,6 +29,7 @@ def regression(X, y, read_kernel=False, sigma=defaults.sigma, eta=defaults.eta, 
     for size in train_size:
         size_train = int(np.floor(len(y_train)*size)) if size <= 1.0 else size
         maes = []
+        r2_scores = []
         for rep in range(n_rep):
             train_idx = np.random.choice(all_indices_train, size = size_train, replace=False)
             y_kf_train = y_train[train_idx]
@@ -36,8 +38,9 @@ def regression(X, y, read_kernel=False, sigma=defaults.sigma, eta=defaults.eta, 
             alpha = scipy.linalg.solve(K, y_kf_train, assume_a='pos')
             y_kf_predict = np.dot(Ks, alpha)
             maes.append(np.mean(np.abs(y_test-y_kf_predict)))
+            r2_scores.append(r2_score(y_test, y_kf_predict))
             if ipywidget != None : ipywidget.value += 1
-        maes_all.append((size_train, np.mean(maes), np.std(maes)))
+        maes_all.append((size_train, np.mean(maes), np.std(maes), np.mean(r2_scores)))
     return maes_all
 
 def main():
@@ -69,8 +72,8 @@ def main():
         y = y[selected]
     maes_all = regression(X, y, read_kernel=args.readk, sigma=args.sigma, eta=args.eta, akernel=args.akernel,
                           test_size=args.test_size, train_size=args.train_size, n_rep=args.splits, debug=args.debug)
-    for size_train, meanerr, stderr in maes_all:
-        print("%d\t%e\t%e" % (size_train, meanerr, stderr))
+    for size_train, meanerr, stderr, score in maes_all:
+        print("%d\t%e\t%e\t%e" % (size_train, meanerr, stderr, score))
     maes_all = np.array(maes_all)
     np.savetxt(args.nameout, maes_all, header="size_train, meanerr, stderr")
 
