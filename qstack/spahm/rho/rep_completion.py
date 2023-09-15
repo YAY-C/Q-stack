@@ -72,12 +72,12 @@ def get_vpattern(atom_set, aux_basis_set):
         v_feat[k] = [start, total]
     return v_feat
 
-def get_vpattern_bond(bonds_dict, bpath, omod=False):
+def get_vpattern_bond(bonds_dict, bpath, omod=False, same_basis=False):
     bond_pairs = []
     for q, qq in bonds_dict.items():
         bond_pairs.extend(qq)
     bond_pairs = set(bond_pairs)
-    mybasis = dmbb.read_df_basis(bond_pairs, bpath)
+    mybasis = dmbb.read_df_basis(bond_pairs, bpath, all_same=same_basis)
     idx, M  = dmbb.get_basis_info(bond_pairs, mybasis, False, 0)
     qq_sizes = {qq:len(idx[qq]) for qq in idx.keys()}
     max_bonds = max([len(val) for val in bonds_dict.values()])

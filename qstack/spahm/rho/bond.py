@@ -10,11 +10,11 @@ from .utils import defaults
 def bond(mols, dms,
          bpath=defaults.bpath, cutoff=defaults.cutoff, omods=defaults.omod,
          spin=None, elements=None, only_m0=False, zeros=False, split=False, printlevel=0,
-         pairfile=None, dump_and_exit=False, no_oriented=False, no_lowdin=False):
+         pairfile=None, dump_and_exit=False, no_oriented=False, no_lowdin=False, all_same=False):
 
     elements, mybasis, qqs0, qqs4q, idx, M = dmbb.read_basis_wrapper(mols, bpath, only_m0, printlevel,
                                                                      elements=elements, cutoff=cutoff,
-                                                                     pairfile=pairfile, dump_and_exit=dump_and_exit)
+                                                                     pairfile=pairfile, dump_and_exit=dump_and_exit, all_same=all_same)
     if spin is None:
         omods = [None]
     qqs = qqs0 if zeros else qqs4q
@@ -63,6 +63,7 @@ def main():
     parser.add_argument('--name',       dest='name_out',   required=True,                         type=str, help='name of the output file.')
     parser.add_argument('--pairfile',      type=str,            dest='pairfile',         default=None,                     help='file with atom pairs')
     parser.add_argument('--dump_and_exit', action='store_true', dest='dump_and_exit',    default=False,                    help='if write the pairfile (and exit)')
+    parser.add_argument('--same_basis', action='store_true', dest='same_basis',    default=False,                    help='if write the pairfile (and exit)')
     args = parser.parse_args()
     if args.print>0: print(vars(args))
     correct_num_threads()
@@ -78,7 +79,10 @@ def main():
     else:
         xyzlist = np.loadtxt(xyzlistfile, dtype=str, usecols=0)
         charge = np.loadtxt(args.filename, usecols=1, dtype=int)
-        spin = np.loadtxt(args.filename, usecols=2, dtype=int)
+        try :
+            spin = np.loadtxt(args.filename, usecols=2, dtype=int)
+        except:
+            spin = np.array([None]*len(xyzlist))
     mols    = utils.load_mols(xyzlist, charge, spin, args.basis, args.print, units=args.units)
     if args.with_symbols: all_atoms   = np.array([mol.elements for mol in mols]).flatten()
     dms     = utils.mols_guess(mols, xyzlist, args.guess,
@@ -86,33 +90,26 @@ def main():
     allvec  = bond(mols, dms, args.bpath, args.cutoff, args.omod,
                    spin=args.spin, elements=args.elements,
                    only_m0=args.only_m0, zeros=args.zeros, split=args.split, printlevel=args.print,
-                   pairfile=args.pairfile, dump_and_exit=args.dump_and_exit, no_oriented=args.single, no_lowdin=args.no_lowdin)
+                   pairfile=args.pairfile, dump_and_exit=args.dump_and_exit, no_oriented=args.single, no_lowdin=args.no_lowdin, all_same=args.same_basis)
 
     if args.print>1: print(allvec.shape)
 
+    if args.single :
+        import sys
+        sys.path.insert(0, "/home/calvino/yannick/SPAHM-RHO/rxn/")
+        from bond_bagging import bagged_atomic_bonds
+        bagged = [bagged_atomic_bonds(allvec[i], xyzlist[i], args.pairfile, bpath=args.bpath, omod=args.omod, same_basis=args.same_basis) for i in range(len(allvec))]
+        allvec = bagged
+    allvec = np.squeeze(allvec)
     if args.spin:
         if args.merge is False:
             for omod, vec in zip(args.omod, allvec):
+                if args.with_symbols: allvec = np.array([(z, v) for v,z in zip(allvec, all_atoms)], dtype=object)
                 np.save(args.name_out+'_'+omod, vec)
         else:
             allvec = np.hstack(allvec)
             if args.with_symbols: allvec = np.array([(z, v) for v,z in zip(allvec, all_atoms)], dtype=object)
             np.save(args.name_out+'_'+'_'.join(args.omod), allvec)
-    if args.single :
-        import sys
-        sys.path.insert(0, "/home/calvino/yannick/SPAHM-RHO/rxn/")
-        from bond_bagging import bagged_atomic_bonds
-        bagged = [bagged_atomic_bonds(allvec[i], xyzlist[i], args.pairfile, bpath=args.bpath, omod=args.omod) for i in range(len(allvec))]
-        allvec = bagged
-
-    if len(allvec) == 1:
-        allvec = allvec[0]
-    if args.print >0 : print(f"Shape of the saved array : {allvec.shape}.")
-    if args.with_symbols:
-        allvec = np.array([(z, v) for v,z in zip(allvec, all_atoms)], dtype=object)
-        np.save(args.name_out, allvec)
-    else:
-        np.save(args.name_out, allvec)
 
 
 if __name__ == "__main__":
