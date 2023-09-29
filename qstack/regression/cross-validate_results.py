@@ -18,15 +18,17 @@ def cv(X, y,
     lc_runs = []
     seeds = [123, 1, 2, 66, 666, 18, 9, 1996, 26,  3, 17]
     for seed,n in zip(seeds, range(n_rep)):
-        error, stdev, eta, sigma = hyperparameters(X, y, read_kernel=readk, sigma=sigma, eta=eta, akernel=akernel, test_size=test_size, splits=splits, printlevel=printlevel, adaptive=adaptive)
-        hyper_runs.append(zip(error, stdev, eta, sigma))
-        results = 
-        maes_all = regression(X, y, read_kernel=readk, sigma=sigma, eta=eta, akernel=akernel                  test_size=test_size, train_size=train_size, n_rep=splits, debug=debug)
+        error = hyperparameters(X, y, read_kernel=False, sigma=sigma, eta=eta, akernel=akernel, test_size=test_size, splits=splits, printlevel=printlevel, adaptive=adaptive, debug=seed)
+        print(error)
+        exit()
+        hyper_runs.append(zip([n]*len(error), error, stdev, eta, sigma))
+        maes_all = regression(X, y, read_kernel=False, sigma=sigma, eta=eta, akernel=akernel, test_size=test_size, train_size=train_size, n_rep=splits, debug=seed)
+        lc_runs.append(maes_all)
 
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='This program finds the optimal hyperparameters.')
+    parser = argparse.ArgumentParser(description='This program runs a full cross-validation of the learning curves (hyperparameters search inbcluded).')
     parser.add_argument('--x',      type=str,   dest='repr',       required=True, help='path to the representations file')
     parser.add_argument('--y',      type=str,   dest='prop',       required=True, help='path to the properties file')
     parser.add_argument('--test',   type=float, dest='test_size',  default=defaults.test_size, help='test set fraction (default='+str(defaults.test_size)+')')
@@ -57,10 +59,6 @@ def main():
         selected = np.loadtxt(args.f_select, dtype=int)
         X = X[selected]
         y = y[selected]
-    print(args.splits)
-    errors = hyperparameters(X, y, read_kernel=args.readk, sigma=args.sigma, eta=args.eta, akernel=args.akernel, test_size=args.test_size, splits=args.splits, printlevel=args.printlevel, adaptive=args.adaptive)
-    errors = np.array(errors)
-    error, stdev, eta, sigma = errors[-1]
-    print(error, eta, sigma)
+    final = cv(X, y, sigma=args.sigma, eta=args.eta, akernel=args.akernel, test_size=args.test_size, splits=args.splits, printlevel=args.printlevel, adaptive=args.adaptive)
 
 if __name__ == '__main__' : main()
