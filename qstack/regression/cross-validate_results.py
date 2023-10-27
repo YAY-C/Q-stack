@@ -19,7 +19,7 @@ def cv(X, y,
     hyper_runs = []
     lc_runs = []
     seeds = [123, 1, 2, 66, 666, 18, 9, 1996, 26,  3, 17]
-    bar = 1
+    bar = 1 if printlevel == 0 else 0
     if bar > 0:
         progress = utt.add_progressbar(max_value=n_rep)
     for seed,n in zip(seeds, range(n_rep)):
