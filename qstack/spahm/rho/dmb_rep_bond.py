@@ -95,7 +95,7 @@ def read_basis_wrapper(mols, bpath, only_m0, printlevel, cutoff=None, elements=N
         if cutoff is None:
             qqs0, qqs4q = get_element_pairs(elements)
         else:
-            qqs0, qqs4q = get_element_pairs_cutoff(elements, mols, cutoff, align=True)
+            qqs0, qqs4q = get_element_pairs_cutoff(elements, mols, cutoff, align=False)
 
     if pairfile and dump_and_exit:
         np.save(pairfile, np.asanyarray((qqs0, qqs4q), dtype=object))

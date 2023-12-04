@@ -65,6 +65,7 @@ def main():
     parser.add_argument('--dump_and_exit', action='store_true', dest='dump_and_exit',    default=False,                    help='if write the pairfile (and exit)')
     parser.add_argument('--same_basis', action='store_true', dest='same_basis',    default=False,                    help='if write the pairfile (and exit)')
     args = parser.parse_args()
+    if args.cutoff <= 0: args.cutoff = None
     if args.print>0: print(vars(args))
     correct_num_threads()
 
