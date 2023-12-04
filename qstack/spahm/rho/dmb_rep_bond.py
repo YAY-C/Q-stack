@@ -149,7 +149,7 @@ def repr_for_bond(i0, i1, L, mybasis, idx, q, r, cutoff, no_lowdin=False):
     return [v0, v1], bname
 
 
-def repr_for_mol(mol, dm, qqs, M, mybasis, idx, maxlen, cutoff, single=False, no_lowdin=False):
+def repr_for_mol(mol, dm, qqs, M, mybasis, idx, maxlen, cutoff, single=False, no_lowdin=False, only_z=[]):
 
     L = lowdin.Lowdin_split(mol, dm)
     if single:
@@ -158,20 +158,27 @@ def repr_for_mol(mol, dm, qqs, M, mybasis, idx, maxlen, cutoff, single=False, no
     r = mol.atom_coords(unit='ANG')
 
     mybonds = [bonds_dict_init(qqs[q0], M) for q0 in q]
-
-    for i0 in range(mol.natm):
-        for i1 in range(i0):
+    if len(only_z) > 0:
+        all_atoms = [ai for ai in range(mol.natm) if (mol.atom_pure_symbol(ai) in only_z)]
+    else:
+        all_atoms = range(mol.natm)
+    for i0 in all_atoms:
+        rest = mol.natm if len(only_z) > 0 else i0
+        for i1 in range(rest):
+            if i0 == i1 : continue
             v, bname = repr_for_bond(i0, i1, L, mybasis, idx, q, r, cutoff, no_lowdin=no_lowdin)
             if v is None:
                 continue
             mybonds[i0][0][bname] += v[0]
+            if len(only_z) > 0 :
+                continue
             if not single:
                 mybonds[i1][0][bname] += v[1]  
             else:
                 mybonds[i1][0][bname] += v[0]
 
-    vec = [None]*mol.natm
-    for i0 in range(mol.natm):
-        vec[i0] = np.hstack([M[qq] @ mybonds[i0][0][qq] for qq in qqs[q[i0]]])
-        vec[i0] = np.pad(vec[i0], (0, maxlen-len(vec[i0])), 'constant')
+    vec = [None]*len(all_atoms)
+    for i1,i0 in enumerate(all_atoms):
+        vec[i1] = np.hstack([M[qq] @ mybonds[i0][0][qq] for qq in qqs[q[i0]]])
+        vec[i1] = np.pad(vec[i1], (0, maxlen-len(vec[i1])), 'constant')
     return np.array(vec)
