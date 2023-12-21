@@ -124,9 +124,10 @@ def main():
                 np.save(args.name_out+'_'+omod, vec)
         else:
             allvec = np.hstack(allvec)
+            allvec = np.array(allvec, ndmin=2)
             if args.with_symbols: allvec = np.array([(z, v) for v,z in zip(allvec, all_atoms)], dtype=object)
             np.save(args.name_out+'_'+'_'.join(args.omod), allvec)
-    if args.with_symbols: allvec = np.array([(z, v) for v,z in zip(allvec, all_atoms)], dtype=object)
+    elif args.with_symbols: allvec = np.array([(z, v) for v,z in zip(allvec, all_atoms)], dtype=object)
     np.save(args.name_out+'_'+'_'.join(args.omod), allvec)
 
 if __name__ == "__main__":
