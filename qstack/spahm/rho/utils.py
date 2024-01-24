@@ -70,18 +70,18 @@ def load_reps(f_in, from_list=True, single=False, with_labels=False, local=True,
         X_list = get_xyzlist(f_in)
         if printlevel > 0:
             progress = add_progressbar(max_value=len(X_list)*2)
-        i=0
+            i=0
         Xs = []
         for f_X in X_list:
             Xs.append(np.load(f_X, allow_pickle=True))
             if printlevel > 0:
-                progress.update(i)
                 i+=1
+                progress.update(i)
     else:
         Xs = np.load(f_in, allow_pickle=True) if not single else np.array([np.load(f_in, allow_pickle=True)])
         if printlevel > 0:
             progress = add_progressbar(max_value=len(Xs))
-        i=0
+            i=0
     reps = []
     labels = []
     for x in Xs:
@@ -101,12 +101,17 @@ def load_reps(f_in, from_list=True, single=False, with_labels=False, local=True,
            else:
                 reps.append(x) 
         if printlevel > 0:
-            progress.update(i)
             i+=1
+            progress.update(i)
+    progress.finish()
     try:
         reps = np.array(reps, dtype=float)
     except:
         print("Error while loading representations, verify you parameters !")
+        shapes = [r.shape[0]  for r in reps]
+        shapes = set(shapes)
+        print(shapes)
+        reps = np.array(reps, dtype=float)
         exit()
     if with_labels:
         return reps, labels
@@ -115,14 +120,14 @@ def load_reps(f_in, from_list=True, single=False, with_labels=False, local=True,
 def add_progressbar(legend='', max_value=100):
     import progressbar
     import time
-    import logging
-    progressbar.streams.wrap_stderr()
-    logging.basicConfig()
+    #import logging
+    #progressbar.streams.wrap_stderr()
+    #logging.basicConfig()
     widgets=[\
     ' [', progressbar.Timer(), '] ',\
     progressbar.Bar(),\
-    ' (', progressbar.ETA(), ') ']
-    bar = progressbar.ProgressBar(widgets=widgets, max_value=max_value).start()
+    ' (', progressbar.ETA(), ')']
+    bar = progressbar.ProgressBar(widgets=widgets, max_value=max_value, redirect_stdout=True).start()
     return bar
 
 def build_reaction(reacts_file, prods_file, local=False, print_level=0, summ=True, diff=True):
