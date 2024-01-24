@@ -92,6 +92,7 @@ def main():
         charge = np.loadtxt(args.filename, usecols=1, dtype=int)
         try :
             spin = np.loadtxt(args.filename, usecols=2, dtype=int)
+            args.spin = True
         except:
             spin = np.array([None]*len(xyzlist))
     mols    = utils.load_mols(xyzlist, charge, spin, args.basis, args.print, units=args.units)
@@ -128,6 +129,7 @@ def main():
             if args.with_symbols: allvec = np.array([(z, v) for v,z in zip(allvec, all_atoms)], dtype=object)
             np.save(args.name_out+'_'+'_'.join(args.omod), allvec)
     elif args.with_symbols: allvec = np.array([(z, v) for v,z in zip(allvec, all_atoms)], dtype=object)
+    print(allvec.shape)
     np.save(args.name_out+'_'+'_'.join(args.omod), allvec)
 
 if __name__ == "__main__":
