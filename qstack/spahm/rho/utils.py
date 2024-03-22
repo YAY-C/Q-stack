@@ -31,10 +31,18 @@ def get_chsp(f, n):
 
 def load_mols(xyzlist, charge, spin, basis, printlevel=0, units='ANG'):
     mols = []
+    if printlevel > 0:
+        progress = add_progressbar(max_value=len(xyzlist))
+        i = 0
     for xyzfile, ch, sp in zip(xyzlist, charge, spin):
-        if printlevel>0: print(xyzfile, flush=True)
+        if printlevel>1: print(xyzfile, flush=True)
         mols.append(compound.xyz_to_mol(xyzfile, basis, charge=0 if ch is None else ch, spin=0 if ch is None else sp, unit=units)) #TODO
-    if printlevel>0: print()
+        if printlevel > 0:
+            i+=1
+            progress.update(i)
+    if printlevel>0:
+        print()
+        progress.finish()
     return mols
 
 def mols_guess(mols, xyzlist, guess, xc=defaults.xc, spin=None, readdm=False, printlevel=0):
