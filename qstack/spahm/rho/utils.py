@@ -86,7 +86,7 @@ def load_reps(f_in, from_list=True, single=False, with_labels=False, local=True,
     labels = []
     for x in Xs:
         if local == True:
-            if type(x[0,0]) == str or type(x[0,0]) == np.str_:
+            if x.ndim > 1 and (type(x[0,0]) == str or type(x[0,0])) == np.str_:
                 if summ:
                     reps.append(x[:,1].sum(axis=0))
                 else:
@@ -103,7 +103,7 @@ def load_reps(f_in, from_list=True, single=False, with_labels=False, local=True,
         if printlevel > 0:
             i+=1
             progress.update(i)
-    progress.finish()
+    if printlevel > 0: progress.finish()
     try:
         reps = np.array(reps, dtype=float)
     except:
@@ -117,6 +117,7 @@ def load_reps(f_in, from_list=True, single=False, with_labels=False, local=True,
         return reps, labels
     else:
         return reps
+
 def add_progressbar(legend='', max_value=100):
     import progressbar
     import time
@@ -152,7 +153,7 @@ def build_reaction(reacts_file, prods_file, local=False, print_level=0, summ=Tru
     for rxn in reacts:
         xr = []
         for r in rxn:
-            xr.append(load_reps(r, from_list=False, with_labels=False, local=local, summ=False, single=True))
+            xr.append(load_reps(r, from_list=False, with_labels=False, local=local, summ=True if local else False, single=True))
         xr = np.squeeze(xr)
 #        print(xr.shape)
 #        exit()
@@ -165,7 +166,7 @@ def build_reaction(reacts_file, prods_file, local=False, print_level=0, summ=Tru
     for rxn in prods:
         xp=[]
         for p in rxn:
-            xp.append(load_reps(p, from_list=False, with_labels=False, local=local, summ=False, single=True))
+            xp.append(load_reps(p, from_list=False, with_labels=False, local=local, summ=True if local else False, single=True))
         xp = np.squeeze(xp)
         if summ and xp.ndim > 1:
             xp = xp.sum(axis=0)
