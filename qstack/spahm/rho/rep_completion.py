@@ -72,7 +72,7 @@ def get_vpattern(atom_set, aux_basis_set):
         v_feat[k] = [start, total]
     return v_feat
 
-def get_vpattern_bond(bonds_dict, bpath, omod=False, same_basis=False):
+def get_vpattern_bond(bonds_dict, bpath, omod=False, same_basis=True):
     bond_pairs = []
     for q, qq in bonds_dict.items():
         bond_pairs.extend(qq)
