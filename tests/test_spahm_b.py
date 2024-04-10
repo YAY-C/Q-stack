@@ -8,9 +8,8 @@ def test_water():
     mols = utils.load_mols([xyz_in], [0], [0], 'minao')
     dms = utils.mols_guess(mols, [xyz_in], 'LB', spin=[0])
     X = bond.bond(mols, dms, spin=[0])
-    X = np.hstack(X) # merging alpha-beta components for spin unrestricted representation
-    
-    true_file = './data/H2O_spahm_b.npy_alpha_beta.npy'
+    X = np.hstack(X) # merging alpha-beta components for spin unrestricted representation #TODO: should be included into function not in main
+    true_file = 'data/H2O_spahm_b.npy_alpha_beta.npy'
     X_true = np.load(true_file)
     assert(X_true.shape == X.shape)
     for Xa, Xa_true in zip(X, X_true):
