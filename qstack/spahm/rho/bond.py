@@ -63,7 +63,7 @@ def main():
     parser.add_argument('--split',    action='store_true', dest='split',     default=False,                    help='if split into molecules')
     parser.add_argument('--merge',    action='store_true', dest='merge',     default=True,                     help='if merge different omods')
     parser.add_argument('--onlym0',   action='store_true', dest='only_m0',   default=False,                    help='if use only fns with m=0')
-    parser.add_argument('--single',   action='store_true', dest='single',   default=False,                    help='for generating non-oriented representations')
+    parser.add_argument('--molecular',   action='store_true', dest='molecular',   default=False,                    help='for generating molecular bond representations')
     parser.add_argument('--no-lowdin',   action='store_true', dest='no_lowdin',   default=False,                    help='for generating non-lowdin splitted representations')
     parser.add_argument('--savedm',   action='store_true', dest='savedm',    default=False,                    help='if save dms')
     parser.add_argument('--symbols',  action='store_true', dest='with_symbols',    default=False,             help='if save tuples with (symbol, vec) for all atoms')
@@ -106,21 +106,27 @@ def main():
                                xc=defaults.xc, spin=args.spin, readdm=args.readdm, printlevel=args.print)
     else:
         dms = []
-    allvec  = bond(mols, dms, args.bpath, args.cutoff, args.omod,
+    allvec  = bond(mols, dms, args.bpath, args.cutoff, args.omod, #carefull passing molecular to no-oriented changes the atomic-bpnd reps (sign change)
                    spin=args.spin, elements=args.elements,
                    only_m0=args.only_m0, zeros=args.zeros, split=args.split, printlevel=args.print,
-                   pairfile=args.pairfile, dump_and_exit=args.dump_and_exit, no_oriented=args.single, no_lowdin=args.no_lowdin, all_same=args.same_basis, only_z=args.only_z)
+                   pairfile=args.pairfile, dump_and_exit=args.dump_and_exit, no_oriented=args.molecular, no_lowdin=args.no_lowdin, all_same=args.same_basis, only_z=args.only_z)
 
     if args.print>1: print(allvec.shape)
 
-    if args.single :
+    if args.molecular :
         import sys
         sys.path.insert(0, "/home/calvino/yannick/SPAHM-RHO/rxn/")
         from bond_bagging import bagged_atomic_bonds
+        if len(xyzlist) == 1:
+            allvec = np.array([allvec])
         bagged = [bagged_atomic_bonds(allvec[i], xyzlist[i], args.pairfile, bpath=args.bpath, omod=args.omod, same_basis=args.same_basis) for i in range(len(allvec))]
-        allvec = bagged
-    allvec = np.squeeze(allvec)
-    allvec = np.array(allvec, ndmin=2)
+        allvec = np.array(bagged)
+        args.spin = False
+        args.with_symbols = False
+        allvec = np.squeeze(allvec)
+    else:
+        allvec = np.squeeze(allvec)
+        allvec = np.array(allvec, ndmin=2)
     if args.spin:
         if args.merge is False:
             for omod, vec in zip(args.omod, allvec):
