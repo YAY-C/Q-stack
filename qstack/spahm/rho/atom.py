@@ -19,7 +19,7 @@ def check_file(mol_file):
 def get_repr(mol, elements, charge, spin,
              open_mod=defaults.omod, dm=None,
              guess=defaults.guess, model=defaults.model, xc=defaults.xc,
-             auxbasis=defaults.auxbasis, only_z=[]):
+             auxbasis=defaults.auxbasis, only_z=[], valence_only=False):
 
     # User-defined options
     guess = spahm.guesses.get_guess(guess)
@@ -39,7 +39,7 @@ def get_repr(mol, elements, charge, spin,
     rep = []
     for omod in open_mod:
         DM      = utils.dm_open_mod(dm, omod) if spin is not None else dm
-        c_df    = df_wrapper(mol, DM, auxbasis, only_i=only_i)
+        c_df    = df_wrapper(mol, DM, auxbasis, only_i=only_i, valence_only=valence_only)
         vectors = sym_wrapper(c_df, mol, idx, ao, ao_len, M, elements)
         if spin is None:
             rep = vectors
@@ -71,6 +71,7 @@ def main():
     parser.add_argument('--charge',    dest='charge',    default=0,                            type=int, help='total charge of the system (default: 0)')
     parser.add_argument('--spin',      dest='spin',      default=None,                         type=int, help='number of unpaired electrons (default: None) (use 0 to treat a closed-shell system in a UHF manner)')
     parser.add_argument('--xc',        dest='xc',        default=defaults.xc,                  type=str, help='DFT functional for the SAD guess (default=HF)')
+    parser.add_argument('--valence',        dest='valence_only',        action='store_true', help='to generate valence density only representations')
     parser.add_argument('--nameout',       dest='NameOut',   default=None,                         type=str, help='name of the outpute representations file.')
     parser.add_argument('--omod',      dest='omod',      default=defaults.omod,     nargs='+', type=str, help='model(s) for open-shell systems (alpha, beta, sum, diff')
     args = parser.parse_args()
