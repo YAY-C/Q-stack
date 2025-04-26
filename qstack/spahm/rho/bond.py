@@ -205,7 +205,7 @@ def main():
     if args.filename.endswith('xyz'):
         xyzlist = [args.filename]
         charge  = np.array([int(args.charge) if args.charge is not None else 0])
-        spin    = np.array([int(args.spin)   if args.spin   is not None else None])
+        spin    = np.array([int(args.spin)   if (args.spin != "None") else None])
     else:
         xyzlistfile = args.filename
         xyzlist = utils.get_xyzlist(xyzlistfile)
