@@ -7,6 +7,33 @@ from sklearn.model_selection import KFold
 from qstack.regression.kernel_utils import get_kernel, defaults, ParseKwargs, train_test_split_idx, sparse_regression_kernel
 from qstack.mathutils.fps import do_fps
 
+def k_fold_opt(K_all, eta, splits=5, read_kernel=False, y_train=None, sparse=False):
+    kfold = KFold(n_splits=splits, shuffle=False)
+    all_maes = []
+    if read_kernel is True:
+        X_train = K_all
+    for train_idx, test_idx in kfold.split(X_train):
+        y_kf_train, y_kf_test = y_train[train_idx], y_train[test_idx]
+
+        if not sparse:
+            K_solve = np.copy(K_all [np.ix_(train_idx,train_idx)])
+            K_solve[np.diag_indices_from(K_solve)] += eta
+            y_solve = y_kf_train
+            Ks = K_all [np.ix_(test_idx,train_idx)]
+        else:
+            K_solve, y_solve = sparse_regression_kernel(K_all[train_idx], y_kf_train, sparse_idx, eta)
+            Ks = K_all [np.ix_(test_idx,sparse_idx)]
+
+        try:
+            alpha = scipy.linalg.solve(K_solve, y_solve, assume_a='pos', overwrite_a=True)
+        except scipy.linalg.LinAlgError:
+            print('singular matrix')
+            all_maes.append(np.nan)
+            break
+        y_kf_predict = np.dot(Ks, alpha)
+        all_maes.append(np.mean(np.abs(y_kf_predict-y_kf_test)))
+    return np.mean(all_maes), np.std(all_maes)
+
 
 def hyperparameters(X, y,
            sigma=defaults.sigmaarr, eta=defaults.etaarr, gkernel=defaults.gkernel, gdict=defaults.gdict,
@@ -37,31 +64,6 @@ def hyperparameters(X, y,
         where C is the number of parameter set and
         the array is sorted according to MAEs (last is minimum)
     """
-    def k_fold_opt(K_all, eta):
-        kfold = KFold(n_splits=splits, shuffle=False)
-        all_maes = []
-        for train_idx, test_idx in kfold.split(X_train):
-            y_kf_train, y_kf_test = y_train[train_idx], y_train[test_idx]
-
-            if not sparse:
-                K_solve = np.copy(K_all [np.ix_(train_idx,train_idx)])
-                K_solve[np.diag_indices_from(K_solve)] += eta
-                y_solve = y_kf_train
-                Ks = K_all [np.ix_(test_idx,train_idx)]
-            else:
-                K_solve, y_solve = sparse_regression_kernel(K_all[train_idx], y_kf_train, sparse_idx, eta)
-                Ks = K_all [np.ix_(test_idx,sparse_idx)]
-
-            try:
-                alpha = scipy.linalg.solve(K_solve, y_solve, assume_a='pos', overwrite_a=True)
-            except scipy.linalg.LinAlgError:
-                print('singular matrix')
-                all_maes.append(np.nan)
-                break
-            y_kf_predict = np.dot(Ks, alpha)
-            all_maes.append(np.mean(np.abs(y_kf_predict-y_kf_test)))
-        return np.mean(all_maes), np.std(all_maes)
-
     def hyper_loop(sigma, eta):
         errors = []
         for s in sigma:
@@ -71,7 +73,7 @@ def hyperparameters(X, y,
                 K_all = X_train
 
             for e in eta:
-                mean, std = k_fold_opt(K_all, e)
+                mean, std = k_fold_opt(K_all, e, splits=splits, read_kernel=True, y_train=y_train, sparse=sparse)
                 if printlevel>0 :
                     sys.stderr.flush()
                     print(s, e, mean, std, flush=True)
