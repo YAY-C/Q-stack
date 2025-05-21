@@ -181,7 +181,7 @@ def main():
     parser.add_argument('--cutoff',        type=float,          dest='cutoff',         default=defaults.cutoff,          help=f'bond length cutoff in Å (default={defaults.cutoff})')
     parser.add_argument('--bpath',         type=str,            dest='bpath',          default=defaults.bpath,           help=f'directory with basis sets (default={defaults.bpath})')
     parser.add_argument('--omod',          type=str,            dest='omod',           default=defaults.omod, nargs='+', help=f'model for open-shell systems (alpha, beta, sum, diff, default={defaults.omod})')
-    parser.add_argument('--model',          type=str,            dest='model',          default=defaults.omod, help=f'model for the atomic density fitting (default={defaults.model})')
+    parser.add_argument('--model',          type=str,            dest='model',          default=defaults.model, help=f'model for the atomic density fitting (default={defaults.model})')
     parser.add_argument('--print',         type=int,            dest='print',          default=0,                        help='printing level')
     parser.add_argument('--zeros',         action='store_true', dest='zeros',          default=False,                    help='use a version with more padding zeros')
     parser.add_argument('--split',         action='store_true', dest='split',          default=False,                    help='split into molecules')
