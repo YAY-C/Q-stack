@@ -21,6 +21,7 @@ Q-stack is a stack of codes for dedicated pre- and post-processing tasks for Qua
 For now, we link to the relevant packages that will be incorporated (among others):
 - [x] https://github.com/lcmd-epfl/azo-xcite-tools
 - [x] https://github.com/lcmd-epfl/SPAHM
+- [x] https://github.com/lcmd-epfl/SPAHM-RHO
 - [x] https://github.com/lcmd-epfl/RHO-Decomposition
 - [ ] https://github.com/lcmd-epfl/ml-density
 - [x] https://github.com/lcmd-epfl/OTPD-basis
@@ -51,8 +52,6 @@ python -m pip install -e .[all]    # note: this translates as "install as '-e'di
 ```
 
 For the optional step above, we also have an `environment.yml` file available, if you prefer working with conda environments.
-
-A small part of Q-stack, isolated in the `qstack_qml` module name, can be installed on its own, see [the qstack-qml subdirectory's readme](../master/qstack/qstack-qml/README.md).
 
 
 ## Examples [↑](#contents)
